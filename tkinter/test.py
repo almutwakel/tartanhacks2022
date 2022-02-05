@@ -6,25 +6,23 @@ from tkinter import *
 
 pcount = 0
 
-# def make(): 
 root = Tk()
 root.attributes("-fullscreen", False)
 
-title = Label(root, text = "p n u m b e r")
-text = Message(root, text = pcount, font = 20000)
-xButton = Button(root, text="x", command=root.destroy)
+def make(): 
+    alert = Toplevel()
+    # alert.attributes("-toplevel", True)
+    title = Label(alert, text = "p n u m b e r")
+    text = Message(alert, text = pcount, font = 20000)
+    title.pack()
+    text.pack()
+    return alert
 
-title.pack()
-text.pack()
-xButton.pack()
-# return root
-
-
-def display():
-    # title.pack()
-    text.configure(text = pcount, font = 20000)
-    # xButton.pack()
-    return
+# def display():
+#     # title.pack()
+#     text.configure(text = pcount, font = 20000)
+#     # xButton.pack()
+#     return
 
 def pupdate():
     global pcount 
@@ -33,25 +31,19 @@ def pupdate():
 
 
 lookingAway = True
-while(True):
-    if(lookingAway): 
-        display()
-        root.update()
+alert = None
+while True:
+    root.update()
+    if lookingAway and alert is None : 
+        # display()
+        # alert.update()
         # root.deiconify() #may need this for toplevel
         # root.attributes('-topmost', True) #also not working for toplevel :()
         # root.after(5000, root.withdraw())
 
         pupdate()
+        alert = make()
 
-        # display()
-        #root.destroy()
-        # root = make()
 
-        # pupdate()
-        # root.after(4000, root.destroy())
-
-# b = True
-# while(b):
-#     print(1)
-#     b = False
-    # root.mainloop()
+    elif not lookingAway and alert is not None :
+        alert.destroy()
