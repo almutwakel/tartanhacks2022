@@ -8,7 +8,7 @@ pcount = 0
 
 # def make(): 
 root = Tk()
-root.attributes("-fullscreen", True)
+root.attributes("-fullscreen", False)
 
 title = Label(root, text = "p n u m b e r")
 text = Message(root, text = pcount, font = 20000)
@@ -24,6 +24,7 @@ def display():
     # title.pack()
     text.configure(text = pcount, font = 20000)
     # xButton.pack()
+    return
 
 def pupdate():
     global pcount 
@@ -38,7 +39,7 @@ while(True):
         root.update()
         # root.deiconify() #may need this for toplevel
         # root.attributes('-topmost', True) #also not working for toplevel :()
-        root.after(5000, root.withdraw())
+        # root.after(5000, root.withdraw())
 
         pupdate()
 
