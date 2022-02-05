@@ -8,15 +8,15 @@ pcount = 0
 
 # def make(): 
 root = Tk()
-root.attributes("-fullscreen", True)
+root.attributes("-fullscreen", False)
 
 title = Label(root, text = "p n u m b e r")
 text = Message(root, text = pcount, font = 20000)
-xButton = Button(root, text="x", command=root.destroy)
+# xButton = Button(root, text="x", command=root.destroy)
 
 title.pack()
 text.pack()
-xButton.pack()
+# xButton.pack()
 # return root
 
 
