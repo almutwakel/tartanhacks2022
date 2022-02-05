@@ -1,3 +1,4 @@
+import time
 from inspect import formatargvalues
 from sys import displayhook
 import tkinter
@@ -9,7 +10,7 @@ pcount = 0
 root = Tk()
 root.attributes("-fullscreen", False)
 
-def make(): 
+def make():
     alert = Toplevel()
     # alert.attributes("-toplevel", True)
     title = Label(alert, text = "p n u m b e r")
@@ -25,16 +26,15 @@ def make():
 #     return
 
 def pupdate():
-    global pcount 
+    global pcount
     pcount += 1
     print(pcount)
-
 
 lookingAway = True
 alert = None
 while True:
     root.update()
-    if lookingAway and alert is None : 
+    if lookingAway and alert is None :
         # display()
         # alert.update()
         # root.deiconify() #may need this for toplevel
@@ -43,7 +43,10 @@ while True:
 
         pupdate()
         alert = make()
+        lookingAway = False
+        time.sleep(0.5)
 
-
-    elif not lookingAway and alert is not None :
+    elif not lookingAway and alert is not None:
         alert.destroy()
+        alert = None
+        lookingAway = True

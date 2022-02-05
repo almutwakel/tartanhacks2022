@@ -3,6 +3,39 @@ import tkinter
 import math
 from model import pose
 import time
+from inspect import formatargvalues
+from sys import displayhook
+import tkinter
+import threading
+from tkinter import *
+
+
+pcount = 0
+root = Tk()
+root.attributes("-fullscreen", False)
+
+
+def make():
+    alert = Toplevel()
+    # alert.attributes("-toplevel", True)
+    title = Label(alert, text="p n u m b e r")
+    text = Message(alert, text=pcount, font=20000)
+    title.pack()
+    text.pack()
+    return alert
+
+
+# def display():
+#     # title.pack()
+#     text.configure(text = pcount, font = 20000)
+#     # xButton.pack()
+#     return
+
+def pupdate():
+    global pcount
+    pcount += 1
+    # print(pcount)
+
 
 mark_detector = pose.MarkDetector()
 cap = pose.cv2.VideoCapture(0)
@@ -94,17 +127,46 @@ def detect():
     #    return
     return submission
 
+def check_lookaway(a1, a2, a3, threshold=0.8):
+    if a1 > threshold and a2 > threshold and a3 > threshold:
+        return 2
+    elif a1 < -threshold and a2 < -threshold and a3 < -threshold:
+        return 2
+    elif -threshold < a1 < threshold and -threshold < a2 < threshold and -threshold < a3 < threshold:
+        return 0
+    else:
+        return 1
+
 
 if __name__ == "__main__":
+    lookingAway = False
+    alert = None
     for i in range(1000):
         angle = detect()
-        print(angle)
-        if angle > 0.8 or angle < -0.8:
-            print("looked away")
-        elif angle is None or angle == 0:
-            print("no face detected")
-        else:
-            print("looking forward")
+        angle2 = detect()
+        angle3 = detect()
+        lookingAway = check_lookaway(angle, angle2, angle3)
+
+        root.update()
+        print("root updated")
+        # lookingAway = True
+        # alert = None
+        if lookingAway == 2 and alert is None:
+            # display()
+            # alert.update()
+            # root.deiconify() #may need this for toplevel
+            # root.attributes('-topmost', True) #also not working for toplevel :()
+            # root.after(5000, root.withdraw())
+
+            pupdate()
+            alert = make()
+            time.sleep(0.5)
+            print(alert)
+
+        elif lookingAway == 0 and alert is not None:
+            alert.destroy()
+            alert = None
+            print(alert)
 
     pose.cv2.destroyAllWindows()
     cap.release()
