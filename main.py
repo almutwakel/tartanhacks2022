@@ -98,8 +98,11 @@ def detect():
 if __name__ == "__main__":
     for i in range(1000):
         angle = detect()
+        print(angle)
         if angle > 0.8 or angle < -0.8:
             print("looked away")
+        elif angle is None or angle == 0:
+            print("no face detected")
         else:
             print("looking forward")
 
