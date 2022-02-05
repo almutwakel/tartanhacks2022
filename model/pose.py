@@ -5,10 +5,10 @@ import tensorflow as tf
 from tensorflow import keras
 import math
 
-modelFile = "models/res10_300x300_ssd_iter_140000.caffemodel"
-configFile = "models/deploy.prototxt"
+modelFile = "model/models/res10_300x300_ssd_iter_140000.caffemodel"
+configFile = "model/models/deploy.prototxt"
 net = cv2.dnn.readNetFromCaffe(configFile, modelFile)
-img = cv2.imread('images.jpg')
+img = cv2.imread('model/images.jpg')
 h, w = img.shape[:2]
 blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0,
 (300, 300), (104.0, 117.0, 123.0))
@@ -29,8 +29,8 @@ class FaceDetector:
     """Detect human face from image"""
 
     def __init__(self,
-                 dnn_proto_text='models/deploy.prototxt',
-                 dnn_model='models/res10_300x300_ssd_iter_140000.caffemodel'):
+                 dnn_proto_text='model/models/deploy.prototxt',
+                 dnn_model='model/models/res10_300x300_ssd_iter_140000.caffemodel'):
         """Initialization"""
         self.face_net = cv2.dnn.readNetFromCaffe(dnn_proto_text, dnn_model)
         self.detection_result = None
@@ -83,7 +83,7 @@ class FaceDetector:
 class MarkDetector:
     """Facial landmark detector by Convolutional Neural Network"""
 
-    def __init__(self, saved_model='models/pose_model'):
+    def __init__(self, saved_model='model/models/pose_model/'):
         """Initialization"""
         # A face detector is required for mark detection.
         self.face_detector = FaceDetector()
@@ -92,7 +92,9 @@ class MarkDetector:
         self.marks = None
 
         # Restore model from the saved_model file.
-        self.model = keras.models.load_model(saved_model)
+        # saved_model.summary()
+        # self.model = keras.models.load_model(saved_model)
+        self.model = tf.saved_model.load(saved_model)
 
     @staticmethod
     def draw_box(image, boxes, box_color=(255, 255, 255)):
@@ -210,7 +212,7 @@ def draw_annotation_box(img, rotation_vector, translation_vector, camera_matrix,
     point_3d.append((front_size, front_size, front_depth))
     point_3d.append((front_size, -front_size, front_depth))
     point_3d.append((-front_size, -front_size, front_depth))
-    point_3d = np.array(point_3d, dtype=np.float).reshape(-1, 3)
+    point_3d = np.array(point_3d, dtype=float).reshape(-1, 3)
 
     # Map to 2d img points
     (point_2d, _) = cv2.projectPoints(point_3d,
@@ -231,95 +233,3 @@ def draw_annotation_box(img, rotation_vector, translation_vector, camera_matrix,
     #     point_2d[8]), color, line_width, cv2.LINE_AA)
 
     return (point_2d[2], k)
-
-
-mark_detector = MarkDetector()
-cap = cv2.VideoCapture(0)
-ret, img = cap.read()
-size = img.shape
-font = cv2.FONT_HERSHEY_SIMPLEX
-# 3D model points.
-model_points = np.array([
-    (0.0, 0.0, 0.0),  # Nose tip
-    (0.0, -330.0, -65.0),  # Chin
-    (-225.0, 170.0, -135.0),  # Left eye left corner
-    (225.0, 170.0, -135.0),  # Right eye right corne
-    (-150.0, -150.0, -125.0),  # Left Mouth corner
-    (150.0, -150.0, -125.0)  # Right mouth corner
-])
-
-# Camera internals
-focal_length = size[1]
-center = (size[1] / 2, size[0] / 2)
-camera_matrix = np.array(
-    [[focal_length, 0, center[0]],
-     [0, focal_length, center[1]],
-     [0, 0, 1]], dtype="double"
-)
-while True:
-    ret, img = cap.read()
-    if ret == True:
-        faceboxes = mark_detector.extract_cnn_facebox(img)
-        for facebox in faceboxes:
-            face_img = img[facebox[1]: facebox[3],
-                       facebox[0]: facebox[2]]
-            face_img = cv2.resize(face_img, (128, 128))
-            face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
-            marks = mark_detector.detect_marks([face_img])
-            marks *= (facebox[2] - facebox[0])
-            marks[:, 0] += facebox[0]
-            marks[:, 1] += facebox[1]
-            shape = marks.astype(np.uint)
-            # mark_detector.draw_marks(img, marks, color=(0, 255, 0))
-            image_points = np.array([
-                shape[30],  # Nose tip
-                shape[8],  # Chin
-                shape[36],  # Left eye left corner
-                shape[45],  # Right eye right corne
-                shape[48],  # Left Mouth corner
-                shape[54]  # Right mouth corner
-            ], dtype="double")
-            dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
-            (success, rotation_vector, translation_vector) = cv2.solvePnP(model_points, image_points, camera_matrix,
-                                                                          dist_coeffs, flags=cv2.SOLVEPNP_UPNP)
-
-            # Project a 3D point (0, 0, 1000.0) onto the image plane.
-            # We use this to draw a line sticking out of the nose
-
-            (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), rotation_vector,
-                                                             translation_vector, camera_matrix, dist_coeffs)
-
-            for p in image_points:
-                cv2.circle(img, (int(p[0]), int(p[1])), 3, (0, 0, 255), -1)
-
-            p1 = (int(image_points[0][0]), int(image_points[0][1]))
-            p2 = (int(nose_end_point2D[0][0][0]), int(nose_end_point2D[0][0][1]))
-            x1, x2 = draw_annotation_box(img, rotation_vector, translation_vector, camera_matrix)
-
-            cv2.line(img, p1, p2, (0, 255, 255), 2)
-            cv2.line(img, tuple(x1), tuple(x2), (255, 255, 0), 2)
-            # for (x, y) in shape:
-            #     cv2.circle(img, (x, y), 4, (255, 255, 0), -1)
-            # cv2.putText(img, str(p1), p1, font, 1, (0, 255, 255), 1)
-            try:
-                m = (p2[1] - p1[1]) / (p2[0] - p1[0])
-                ang1 = int(math.degrees(math.atan(m)))
-            except:
-                ang1 = 90
-
-            try:
-                m = (x2[1] - x1[1]) / (x2[0] - x1[0])
-                ang2 = int(math.degrees(math.atan(-1 / m)))
-            except:
-                ang2 = 90
-
-                # print('div by zero error')
-            cv2.putText(img, str(ang1), tuple(p1), font, 2, (128, 255, 255), 3)
-            cv2.putText(img, str(ang2), tuple(x1), font, 2, (255, 255, 128), 3)
-        cv2.imshow('img', img)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    else:
-        break
-cv2.destroyAllWindows()
-cap.release()
