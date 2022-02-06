@@ -7,19 +7,26 @@ from inspect import formatargvalues
 from sys import displayhook
 import tkinter
 import threading
+import random
 from tkinter import *
 
 
 pcount = 0
 root = Tk()
 root.attributes("-fullscreen", False)
-
+# k and l are gone
+letters = ["ᔑ", "ʖ", "ᓵ", "↸", "ᒷ", "⎓", "⊣", "⍑", "╎", "⋮", "ᒲ", "リ", "𝙹", 
+"!", "¡", "ᑑ", "∷", "ᓭ", "ℸ ̣", "⚍", "⍊", "∴", " ̇/", "||", "⨅"]
 
 def make():
     alert = Toplevel()
+    alert.configure(bg='#ede0ce')
     # alert.attributes("-toplevel", True)
-    title = Label(alert, text="p n u m b e r")
-    text = Message(alert, text=pcount, font=20000)
+    title = Label(alert, bg = '#ede0ce', text = "p n u m b e r ᓵ")
+    if(random.random() < 0.5):
+        text = Message(alert, bg = '#ede0ce',text = pcount, font = ("Arial", 200))
+    else:
+        text = Message(alert, bg = '#ede0ce',text = random.choice(letters), font = ("Arial", 200))
     title.pack()
     text.pack()
     return alert
